@@ -14,8 +14,8 @@ erDiagram
         BIGINT lock_id FK
     }
     parenthood {
-        BIGINT parent_resource_id PK_FK
-        BIGINT child_resource_id PK_FK
+        BIGINT parent_resource_id PK
+        BIGINT child_resource_id PK
     }
 
     lock ||--o{ resource : "locks"
