@@ -1,2 +1,3 @@
 rootProject.name = 'FLocker'
 include 'FLockerCore'
+include 'FLockerMySql'
