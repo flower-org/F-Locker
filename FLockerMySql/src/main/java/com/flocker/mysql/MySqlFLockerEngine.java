@@ -120,7 +120,7 @@ public class MySqlFLockerEngine implements FLockerEngine<Long, Long> {
         Future<List<FResource<Long>>> future = pool.withTransaction(conn ->
                 lockedResourceIds(conn, lock).flatMap(ids -> {
                     if (ids.isEmpty()) {
-                        return Future.<List<FResource<Long>>>succeededFuture(List.of());
+                        return Future.succeededFuture(List.of());
                     }
                     return clearLock(conn, ids, lock)
                             .flatMap(ignored -> loadEntities(conn, ids));

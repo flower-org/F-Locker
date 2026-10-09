@@ -1,3 +1,40 @@
+# Database schema
+
+The MySQL-backed engine uses three tables: `lock`, `resource`, and `parenthood`.  
+A `resource` may be locker (hold a reference to a `lock` via `lock_id`), and the `parenthood` table stores the parent → child edges of the resource graph.
+
+```mermaid
+erDiagram
+    lock {
+        BIGINT lock_id PK
+        TIMESTAMP created_at
+    }
+    resource {
+        BIGINT resource_id PK
+        BIGINT lock_id FK
+        BIGINT version
+    }
+    parenthood {
+        BIGINT parent_resource_id PK_FK
+        BIGINT child_resource_id PK_FK
+    }
+
+    lock ||--o{ resource : "locks"
+    resource ||--o{ parenthood : "is parent of"
+    resource ||--o{ parenthood : "is child of"
+```
+
+Descendants are resolved recursively at query time, as follows:
+```SQL
+WITH RECURSIVE descendants AS (
+        SELECT child_resource_id FROM parenthood WHERE parent_resource_id = ?
+        UNION
+        SELECT p.child_resource_id FROM parenthood p
+        JOIN descendants d ON p.parent_resource_id = d.child_resource_id
+        ) SELECT child_resource_id FROM descendants
+```
+The `UNION` (not `UNION ALL`) deduplicates already-visited nodes, so cyclic `parenthood` graphs terminate naturally instead of recursing forever; `cte_max_recursion_depth` (default 1000) is an additional hard safety cap that fails the query fast rather than looping.
+
 # How it works with Galera multi-master
 
 Galera certification is write-set based, keyed by primary key — and lockResource writes to every row it's protecting (`UPDATE resource SET lock_id=… WHERE resource_id IN (entire subtree)`). So the rows we need mutual exclusion on are exactly the rows in our write-set. That's what makes it safe cross-node.
