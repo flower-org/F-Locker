@@ -14,6 +14,6 @@ Note:
 2. Replication lag affects efficiency, not correctness. If node B hasn't yet applied node A's just-committed lock, B's `FOR UPDATE` check passes, B does the work, then B loses certification at commit. Wasted effort, but never an incorrect double-lock.
 
 Bottomline:
-PXC 9.7 multi-writer is safe for this scheme, given
-a) you keep updating the whole subtree and
-b) you add deadlock/certification retry on the caller side.
+PXC 9.7 multi-writer is safe for this scheme, given:
+- a. you keep updating the whole subtree and  
+- b. you add deadlock/certification retry on the caller side.
