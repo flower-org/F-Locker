@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS `lock` (
 CREATE TABLE IF NOT EXISTS resource (
     resource_id  BIGINT      NOT NULL,
     lock_id      BIGINT      NULL,
-    version      BIGINT      NOT NULL DEFAULT 0,
     PRIMARY KEY (resource_id),
     KEY idx_resource_lock (lock_id),
     CONSTRAINT fk_resource_lock FOREIGN KEY (lock_id) REFERENCES `lock` (lock_id)

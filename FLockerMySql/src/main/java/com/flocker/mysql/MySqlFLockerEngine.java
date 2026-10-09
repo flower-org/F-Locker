@@ -25,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>The engine relies on three tables:
  * <ul>
  *   <li>{@code lock(lock_id BIGINT PK, created_at TIMESTAMP)}</li>
- *   <li>{@code resource(resource_id BIGINT PK, lock_id BIGINT NULL FK -> lock, version BIGINT)}</li>
+ *   <li>{@code resource(resource_id BIGINT PK, lock_id BIGINT NULL FK -> lock)}</li>
  *   <li>{@code parenthood(parent_resource_id BIGINT, child_resource_id BIGINT)} &ndash;
  *       the direct parent/child edges of the resource hierarchy; descendants are
  *       resolved recursively at query time.</li>
@@ -40,7 +40,6 @@ public class MySqlFLockerEngine implements FLockerEngine<Long, Long> {
 
     private static final String COL_RESOURCE_ID = "resource_id";
     private static final String COL_LOCK_ID = "lock_id";
-    private static final String COL_VERSION = "version";
     private static final String COL_PARENT_RESOURCE_ID = "parent_resource_id";
     private static final String COL_CHILD_RESOURCE_ID = "child_resource_id";
 
@@ -51,14 +50,14 @@ public class MySqlFLockerEngine implements FLockerEngine<Long, Long> {
     private static final String SELECT_RESOURCES_FOR_UPDATE =
             "SELECT resource_id, lock_id FROM resource WHERE resource_id IN (%s) FOR UPDATE";
     private static final String LOCK_RESOURCES =
-            "UPDATE resource SET lock_id = ?, version = version + 1 WHERE resource_id IN (%s)";
+            "UPDATE resource SET lock_id = ? WHERE resource_id IN (%s)";
     private static final String UNLOCK_RESOURCES =
-            "UPDATE resource SET lock_id = NULL, version = version + 1"
+            "UPDATE resource SET lock_id = NULL"
                     + " WHERE lock_id = ? AND resource_id IN (%s)";
     private static final String SELECT_RESOURCE_IDS_BY_LOCK =
             "SELECT resource_id FROM resource WHERE lock_id = ? FOR UPDATE";
     private static final String SELECT_RESOURCE =
-            "SELECT resource_id, lock_id, version FROM resource WHERE resource_id = ?";
+            "SELECT resource_id, lock_id FROM resource WHERE resource_id = ?";
     private static final String SELECT_PARENT_IDS =
             "SELECT parent_resource_id FROM parenthood WHERE child_resource_id = ?";
     /** Recursively resolves every descendant of a resource from the parent/child edges. */
@@ -263,7 +262,6 @@ public class MySqlFLockerEngine implements FLockerEngine<Long, Long> {
                                 new NoSuchElementException("Entity not found: " + entityId));
                     }
                     Long lockerId = row.getLong(COL_LOCK_ID);
-                    long version = row.getLong(COL_VERSION);
                     FLock<Long> lock = (lockerId == null) ? null : new MySqlFLock(lockerId);
 
                     Future<List<Long>> parentsFuture = conn.preparedQuery(SELECT_PARENT_IDS)
@@ -276,7 +274,7 @@ public class MySqlFLockerEngine implements FLockerEngine<Long, Long> {
                     return Future.all(parentsFuture, descendantsFuture).map(composite -> {
                         List<Long> parents = composite.resultAt(0);
                         List<Long> descendants = composite.resultAt(1);
-                        return new MySqlFResource(entityId, parents, descendants, lock, version);
+                        return new MySqlFResource(entityId, parents, descendants, lock);
                     });
                 });
     }

@@ -20,19 +20,16 @@ public final class MySqlFResource implements FResource<Long> {
     private final List<Long> parentIds;
     private final List<Long> descendantIds;
     @Nullable private final FLock<Long> lock;
-    private final long version;
 
     public MySqlFResource(
             long id,
             List<Long> parentIds,
             List<Long> descendantIds,
-            @Nullable FLock<Long> lock,
-            long version) {
+            @Nullable FLock<Long> lock) {
         this.id = id;
         this.parentIds = Collections.unmodifiableList(parentIds);
         this.descendantIds = Collections.unmodifiableList(descendantIds);
         this.lock = lock;
-        this.version = version;
     }
 
     @Override
@@ -56,18 +53,12 @@ public final class MySqlFResource implements FResource<Long> {
         return lock;
     }
 
-    /** Optimistic-concurrency version of the underlying {@code entity} row. */
-    public long version() {
-        return version;
-    }
-
     @Override
     public String toString() {
         return "MySqlFResource{id=" + id
                 + ", parentIds=" + parentIds
                 + ", descendantIds=" + descendantIds
                 + ", lock=" + lock
-                + ", version=" + version
                 + '}';
     }
 }

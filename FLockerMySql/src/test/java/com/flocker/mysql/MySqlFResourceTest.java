@@ -13,14 +13,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class MySqlFResourceTest {
 
     @Test
-    public void exposesIdParentsDescendantsAndVersion() {
+    public void exposesIdParentsAndDescendants() {
         MySqlFResource entity = new MySqlFResource(
-                7L, List.of(1L, 2L), List.of(8L, 9L), new MySqlFLock(42L), 3L);
+                7L, List.of(1L, 2L), List.of(8L, 9L), new MySqlFLock(42L));
 
         assertEquals(7L, entity.id());
         assertEquals(List.of(1L, 2L), entity.parentIds());
         assertEquals(List.of(8L, 9L), entity.descendantIds());
-        assertEquals(3L, entity.version());
 
         FLock<?> lock = entity.lock();
         assertNotNull(lock);
@@ -29,13 +28,13 @@ public class MySqlFResourceTest {
 
     @Test
     public void unlockedEntityHasNullLock() {
-        MySqlFResource entity = new MySqlFResource(1L, List.of(), List.of(), null, 0L);
+        MySqlFResource entity = new MySqlFResource(1L, List.of(), List.of(), null);
         assertNull(entity.lock());
     }
 
     @Test
     public void relationListsAreUnmodifiable() {
-        MySqlFResource entity = new MySqlFResource(1L, List.of(2L), List.of(3L), null, 0L);
+        MySqlFResource entity = new MySqlFResource(1L, List.of(2L), List.of(3L), null);
         assertTrue(throwsUnsupported(() -> entity.parentIds().add(99L)));
         assertTrue(throwsUnsupported(() -> entity.descendantIds().add(99L)));
     }

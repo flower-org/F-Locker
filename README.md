@@ -12,7 +12,6 @@ erDiagram
     resource {
         BIGINT resource_id PK
         BIGINT lock_id FK
-        BIGINT version
     }
     parenthood {
         BIGINT parent_resource_id PK_FK
